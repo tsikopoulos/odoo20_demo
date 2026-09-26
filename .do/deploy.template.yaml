@@ -8,7 +8,7 @@ spec:
     - name: odoo
       github:
         repo: tsikopoulos/odoo20_demo
-        branch: "20.0"
+        branch: claude/hopeful-volta-j0vimd
         deploy_on_push: true
       dockerfile_path: Dockerfile
       source_dir: /
@@ -60,10 +60,7 @@ spec:
           value: base
         - key: ODOO_WITH_DEMO
           scope: RUN_TIME
-          value: "true"
-        - key: ODOO_INIT_LANGUAGE
-          scope: RUN_TIME
-          value: el_GR
+          value: "false"
         - key: ODOO_WORKERS
           scope: RUN_TIME
           value: "0"

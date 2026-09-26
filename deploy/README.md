@@ -71,10 +71,10 @@ Trusted Sources της βάσης.
 
 1. Στο DigitalOcean: **Settings → Integrations → GitHub → Install & Authorize**
    και δώσε πρόσβαση στο repo `tsikopoulos/odoo20_demo`.
-2. Το spec δείχνει στο branch `20.0` (`services[].github.branch`). Τα αρχεία
-   deploy πρέπει να υπάρχουν σε αυτό το branch, άρα κάνε merge το branch
-   `claude/hopeful-volta-j0vimd` στο `20.0`. Εναλλακτικά άλλαξε προσωρινά το
-   `branch:` στο spec ώστε να δείχνει στο branch που θέλεις να δοκιμάσεις.
+2. Το spec δείχνει στο branch `claude/hopeful-volta-j0vimd`
+   (`services[].github.branch`), όπου βρίσκονται τα αρχεία deploy. Όταν
+   κάνεις merge στο `20.0`, άλλαξε το `branch:` στο spec (ή από το UI,
+   Settings → odoo → Source) ώστε τα deploy να ακολουθούν το `20.0`.
 3. `deploy_on_push: true`: κάθε push στο branch κάνει αυτόματα νέο deploy.
 
 ## Βήμα 3 – Δημιουργία του App
@@ -103,8 +103,8 @@ odoo → Environment Variables):
 | `ODOO_ADMIN_USER_PASSWORD` | Ο κωδικός του χρήστη `admin`. Εφαρμόζεται **μόνο** όταν δημιουργείται η βάση. |
 
 Χρόνοι: το build του image παίρνει περίπου 10–15 λεπτά (πρώτη φορά). Η πρώτη
-εκκίνηση κάνει `-i base` με ελληνικά (`el_GR`) και demo data: 3–8 λεπτά σε
-1 vCPU. Το health check έχει περιθώριο ~18 λεπτά (`initial_delay_seconds` +
+εκκίνηση κάνει `-i base` (χωρίς demo, αγγλικά): 1–3 λεπτά σε 1 vCPU. Με demo
+και ελληνικά (`ODOO_WITH_DEMO`, `ODOO_INIT_LANGUAGE`) υπολόγισε 3–8 λεπτά. Το health check έχει περιθώριο ~18 λεπτά (`initial_delay_seconds` +
 `failure_threshold × period_seconds`), οπότε μην ανησυχείς αν το app δείχνει
 «Deploying» για λίγο. Αν το init διακοπεί στη μέση, το entrypoint το
 ξανατρέχει στην επόμενη εκκίνηση (κατάσταση `partial`).
@@ -126,8 +126,9 @@ odoo → Environment Variables):
 
 1. `https://odoo20-demo.stgroup.gr/odoo` → login `admin` με τον κωδικό
    `ODOO_ADMIN_USER_PASSWORD` (αν δεν ορίστηκε, είναι `admin`: άλλαξέ τον).
-2. Εγκατέστησε apps από το μενού **Apps**. Τα demo data μπαίνουν και στα νέα
-   apps, γιατί η βάση δημιουργήθηκε με `ODOO_WITH_DEMO=true`.
+2. Εγκατέστησε apps από το μενού **Apps**. Η βάση δημιουργείται χωρίς demo
+   data (`ODOO_WITH_DEMO=false`). Ελληνικά προστίθενται από Settings →
+   Languages → Add Language, ή με `ODOO_INIT_LANGUAGE=el_GR` πριν το πρώτο deploy.
 3. Επιβεβαίωσε ότι τα αρχεία είναι στη βάση. Από το **Console** του app
    (Runtime Logs → Console) το `psql` συνδέεται απευθείας στη βάση του Odoo:
 
@@ -153,8 +154,8 @@ odoo → Environment Variables):
 | `ODOO_ADMIN_PASSWD` | τυχαίο | Master password. |
 | `ODOO_ADMIN_USER_PASSWORD` | – | Κωδικός του `admin`, μόνο κατά τη δημιουργία της βάσης. |
 | `ODOO_INIT_MODULES` | `base` | Modules που εγκαθίστανται στη δημιουργία (π.χ. `base,crm,sale_management`). |
-| `ODOO_WITH_DEMO` | `false` (spec: `true`) | Demo data στη δημιουργία. |
-| `ODOO_INIT_LANGUAGE` | – (spec: `el_GR`) | Γλώσσες που φορτώνονται στη δημιουργία. |
+| `ODOO_WITH_DEMO` | `false` | Demo data στη δημιουργία. Μόνο σε νέα βάση. |
+| `ODOO_INIT_LANGUAGE` | – | Γλώσσες που φορτώνονται στη δημιουργία, π.χ. `el_GR`. Μόνο σε νέα βάση. |
 | `ODOO_WORKERS` | `0` | Άφησέ το `0` (threaded, ένα port). |
 | `ODOO_MAX_CRON_THREADS` | `1` | Cron threads. |
 | `ODOO_DB_MAXCONN` | `16` | Max συνδέσεις στη βάση. Το `db-s-1vcpu-1gb` επιτρέπει ~22. |

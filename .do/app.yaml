@@ -9,7 +9,8 @@
 # Before the first deploy:
 #   * create the managed PostgreSQL cluster named in `databases[].cluster_name`
 #     (App Platform can only *attach* production clusters, not create them);
-#   * set the two SECRET values below;
+#   * set the two SECRET values below (random values are generated when the
+#     app is created by Claude; change the admin password from Odoo afterwards);
 #   * point the DNS of `domains[].domain` to the app (CNAME to the
 #     *.ondigitalocean.app hostname), or set `zone` if DNS is hosted at DO.
 name: odoo20-demo
@@ -19,7 +20,7 @@ services:
   - name: odoo
     github:
       repo: tsikopoulos/odoo20_demo
-      branch: "20.0"
+      branch: claude/hopeful-volta-j0vimd   # switch to "20.0" once merged
       deploy_on_push: true
     dockerfile_path: Dockerfile
     source_dir: /
@@ -72,12 +73,9 @@ services:
       - key: ODOO_INIT_MODULES
         scope: RUN_TIME
         value: base
-      - key: ODOO_WITH_DEMO             # demo data at DB creation
+      - key: ODOO_WITH_DEMO             # demo data at DB creation ("true" for a sales demo)
         scope: RUN_TIME
-        value: "true"
-      - key: ODOO_INIT_LANGUAGE         # translations loaded at DB creation
-        scope: RUN_TIME
-        value: el_GR
+        value: "false"
       - key: ODOO_WORKERS               # 0 = threaded mode: one port, websocket works
         scope: RUN_TIME
         value: "0"
