@@ -20,7 +20,7 @@ services:
   - name: odoo
     github:
       repo: tsikopoulos/odoo20_demo
-      branch: claude/hopeful-volta-j0vimd   # switch to "20.0" once merged
+      branch: do-deploy   # switch to "20.0" once merged
       deploy_on_push: true
     dockerfile_path: Dockerfile
     source_dir: /

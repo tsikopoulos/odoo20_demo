@@ -71,10 +71,12 @@ Trusted Sources της βάσης.
 
 1. Στο DigitalOcean: **Settings → Integrations → GitHub → Install & Authorize**
    και δώσε πρόσβαση στο repo `tsikopoulos/odoo20_demo`.
-2. Το spec δείχνει στο branch `claude/hopeful-volta-j0vimd`
-   (`services[].github.branch`), όπου βρίσκονται τα αρχεία deploy. Όταν
-   κάνεις merge στο `20.0`, άλλαξε το `branch:` στο spec (ή από το UI,
-   Settings → odoo → Source) ώστε τα deploy να ακολουθούν το `20.0`.
+2. Το spec δείχνει στο branch `do-deploy` (`services[].github.branch`).
+   Το όνομα δεν έχει κάθετο επίτηδες: το link «Deploy to DigitalOcean»
+   (`https://cloud.digitalocean.com/apps/new?repo=https://github.com/tsikopoulos/odoo20_demo/tree/do-deploy`)
+   δεν βρίσκει το template σε branch με κάθετο στο όνομα. Όταν κάνεις merge
+   στο `20.0`, άλλαξε το `branch:` στο spec (ή από το UI, Settings → odoo →
+   Source) ώστε τα deploy να ακολουθούν το `20.0`.
 3. `deploy_on_push: true`: κάθε push στο branch κάνει αυτόματα νέο deploy.
 
 ## Βήμα 3 – Δημιουργία του App

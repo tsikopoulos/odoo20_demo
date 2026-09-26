@@ -8,7 +8,7 @@ spec:
     - name: odoo
       github:
         repo: tsikopoulos/odoo20_demo
-        branch: claude/hopeful-volta-j0vimd
+        branch: do-deploy
         deploy_on_push: true
       dockerfile_path: Dockerfile
       source_dir: /
