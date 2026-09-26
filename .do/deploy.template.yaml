@@ -1,0 +1,89 @@
+# "Deploy to DigitalOcean" button template (public repositories only).
+# Kept in sync with .do/app.yaml; secrets and the domain must be filled in
+# after the app is created.
+spec:
+  name: odoo20-demo
+  region: fra
+  services:
+    - name: odoo
+      github:
+        repo: tsikopoulos/odoo20_demo
+        branch: "20.0"
+        deploy_on_push: true
+      dockerfile_path: Dockerfile
+      source_dir: /
+      http_port: 8069
+      instance_count: 1
+      instance_size_slug: apps-s-1vcpu-2gb
+      health_check:
+        http_path: /web/health
+        initial_delay_seconds: 180
+        period_seconds: 30
+        timeout_seconds: 10
+        success_threshold: 1
+        failure_threshold: 30
+      termination:
+        drain_seconds: 15
+        grace_period_seconds: 120
+      envs:
+        - key: DB_HOST
+          scope: RUN_TIME
+          value: ${odoo-db.HOSTNAME}
+        - key: DB_PORT
+          scope: RUN_TIME
+          value: ${odoo-db.PORT}
+        - key: DB_USER
+          scope: RUN_TIME
+          value: ${odoo-db.USERNAME}
+        - key: DB_PASSWORD
+          scope: RUN_TIME
+          value: ${odoo-db.PASSWORD}
+        - key: DB_NAME
+          scope: RUN_TIME
+          value: ${odoo-db.DATABASE}
+        - key: DB_CA_CERT
+          scope: RUN_TIME
+          value: ${odoo-db.CA_CERT}
+        - key: DB_SSLMODE
+          scope: RUN_TIME
+          value: require
+        - key: ODOO_ADMIN_PASSWD
+          scope: RUN_TIME
+          type: SECRET
+          value: CHANGE-ME-master-password
+        - key: ODOO_ADMIN_USER_PASSWORD
+          scope: RUN_TIME
+          type: SECRET
+          value: CHANGE-ME-admin-password
+        - key: ODOO_INIT_MODULES
+          scope: RUN_TIME
+          value: base
+        - key: ODOO_WITH_DEMO
+          scope: RUN_TIME
+          value: "true"
+        - key: ODOO_INIT_LANGUAGE
+          scope: RUN_TIME
+          value: el_GR
+        - key: ODOO_WORKERS
+          scope: RUN_TIME
+          value: "0"
+        - key: ODOO_MAX_CRON_THREADS
+          scope: RUN_TIME
+          value: "1"
+        - key: ODOO_DB_MAXCONN
+          scope: RUN_TIME
+          value: "16"
+        - key: ODOO_LOG_LEVEL
+          scope: RUN_TIME
+          value: info
+  databases:
+    - name: odoo-db
+      engine: PG
+      version: "17"
+      production: true
+      cluster_name: odoo20-demo-db
+      db_name: defaultdb
+      db_user: doadmin
+  domains:
+    - domain: odoo20-demo.stgroup.gr
+      type: PRIMARY

@@ -31,6 +31,13 @@ To learn the software, we recommend the [Odoo eLearning](https://www.odoo.com/sl
 or [Scale-up, the business game](https://www.odoo.com/page/scale-up-business-game).
 Developers can start with [the developer tutorials](https://www.odoo.com/documentation/master/developer/howtos.html).
 
+## Deploy on DigitalOcean App Platform
+
+This fork ships a `Dockerfile`, an App Platform spec (`.do/app.yaml`) and an
+entrypoint that stores attachments in PostgreSQL, so the whole instance lives
+in a DigitalOcean Managed Database. See [deploy/README.md](deploy/README.md)
+(in Greek) for the step-by-step guide.
+
 ## Security
 
 If you believe you have found a security issue, check our [Responsible Disclosure page](https://www.odoo.com/security-report)

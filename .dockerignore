@@ -1,0 +1,24 @@
+# Keep the Docker build context small: only the Odoo sources are needed.
+.git
+.github
+.gitignore
+.git-blame-ignore-revs
+.weblate.json
+.do
+.dockerignore
+debian/
+doc/
+setup/
+skills/
+CONTRIBUTING.md
+SECURITY.md
+MANIFEST.in
+setup.cfg
+ruff.toml
+**/__pycache__/
+**/*.py[co]
+**/*.orig
+**/*~
+odoo/filestore
+odoo.conf
+node_modules

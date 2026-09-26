@@ -1,0 +1,111 @@
+# DigitalOcean App Platform spec for Odoo 20.
+#
+#   doctl apps create --spec .do/app.yaml
+#   doctl apps update <APP_ID> --spec .do/app.yaml
+#
+# or paste it in the App Platform UI (Create App -> Edit App Spec).
+# See deploy/README.md for the full walkthrough (in Greek).
+#
+# Before the first deploy:
+#   * create the managed PostgreSQL cluster named in `databases[].cluster_name`
+#     (App Platform can only *attach* production clusters, not create them);
+#   * set the two SECRET values below;
+#   * point the DNS of `domains[].domain` to the app (CNAME to the
+#     *.ondigitalocean.app hostname), or set `zone` if DNS is hosted at DO.
+name: odoo20-demo
+region: fra
+
+services:
+  - name: odoo
+    github:
+      repo: tsikopoulos/odoo20_demo
+      branch: "20.0"
+      deploy_on_push: true
+    dockerfile_path: Dockerfile
+    source_dir: /
+    http_port: 8069
+    instance_count: 1            # keep 1: sessions live on the container disk
+    instance_size_slug: apps-s-1vcpu-2gb
+    health_check:
+      http_path: /web/health
+      # The very first start installs `base` (a few minutes): give it time.
+      initial_delay_seconds: 180
+      period_seconds: 30
+      timeout_seconds: 10
+      success_threshold: 1
+      failure_threshold: 30
+    termination:
+      drain_seconds: 15
+      grace_period_seconds: 120
+    envs:
+      # --- PostgreSQL (bound to the `odoo-db` component below) ---
+      - key: DB_HOST
+        scope: RUN_TIME
+        value: ${odoo-db.HOSTNAME}
+      - key: DB_PORT
+        scope: RUN_TIME
+        value: ${odoo-db.PORT}
+      - key: DB_USER
+        scope: RUN_TIME
+        value: ${odoo-db.USERNAME}
+      - key: DB_PASSWORD
+        scope: RUN_TIME
+        value: ${odoo-db.PASSWORD}
+      - key: DB_NAME
+        scope: RUN_TIME
+        value: ${odoo-db.DATABASE}
+      - key: DB_CA_CERT
+        scope: RUN_TIME
+        value: ${odoo-db.CA_CERT}
+      - key: DB_SSLMODE
+        scope: RUN_TIME
+        value: require            # verify-full also works (DB_CA_CERT is provided)
+      # --- Odoo ---
+      - key: ODOO_ADMIN_PASSWD          # master password (database manager)
+        scope: RUN_TIME
+        type: SECRET
+        value: CHANGE-ME-master-password
+      - key: ODOO_ADMIN_USER_PASSWORD   # password of the "admin" login, applied at DB creation
+        scope: RUN_TIME
+        type: SECRET
+        value: CHANGE-ME-admin-password
+      - key: ODOO_INIT_MODULES
+        scope: RUN_TIME
+        value: base
+      - key: ODOO_WITH_DEMO             # demo data at DB creation
+        scope: RUN_TIME
+        value: "true"
+      - key: ODOO_INIT_LANGUAGE         # translations loaded at DB creation
+        scope: RUN_TIME
+        value: el_GR
+      - key: ODOO_WORKERS               # 0 = threaded mode: one port, websocket works
+        scope: RUN_TIME
+        value: "0"
+      - key: ODOO_MAX_CRON_THREADS
+        scope: RUN_TIME
+        value: "1"
+      - key: ODOO_DB_MAXCONN            # db-s-1vcpu-1gb allows ~22 connections
+        scope: RUN_TIME
+        value: "16"
+      - key: ODOO_LOG_LEVEL
+        scope: RUN_TIME
+        value: info
+
+databases:
+  - name: odoo-db
+    engine: PG
+    version: "17"
+    production: true
+    cluster_name: odoo20-demo-db   # existing managed cluster (same region)
+    db_name: defaultdb
+    db_user: doadmin
+    # For a quick test with a $7 dev database instead, replace the block with:
+    #   - name: odoo-db
+    #     engine: PG
+    #     version: "17"
+    #     production: false
+
+domains:
+  - domain: odoo20-demo.stgroup.gr
+    type: PRIMARY
+    # zone: stgroup.gr   # only if stgroup.gr DNS is managed by DigitalOcean
