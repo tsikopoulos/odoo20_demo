@@ -1,0 +1,58 @@
+// = Home menu toggle (top-left navbar entry)
+// ============================================================================
+$o-home-menu-toggle-app-icon-size: 26px !default;
+
+.o_main_navbar .o_home_menu_toggle {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: calc(var(--o-navbar-height) - #{$o-navbar-padding-v * 2});
+    margin: 0 map-get($spacers, 1) 0 ($o-horizontal-padding * .5);
+    padding: 0 ($o-horizontal-padding * .5);
+    border: 0;
+    border-radius: $o-navbar-entry-border-radius;
+    background: transparent;
+    color: $o-navbar-entry-color;
+    font-size: $o-navbar-brand-font-size;
+    line-height: 1;
+
+    &:hover, &:focus-visible {
+        background: $o-navbar-entry-bg--hover;
+        color: $o-navbar-entry-color--hover;
+    }
+
+    .o_home_menu_toggle_icon {
+        font-size: 1.35em;
+    }
+
+    .o_home_menu_toggle_app_icon {
+        width: $o-home-menu-toggle-app-icon-size;
+        height: $o-home-menu-toggle-app-icon-size;
+        border-radius: $o-border-radius-sm;
+        object-fit: contain;
+
+        &.oi {
+            width: auto;
+            height: auto;
+            font-size: 1.35em;
+        }
+    }
+
+    // Inside an app, show its icon and reveal the apps icon on hover.
+    &.o_home_menu_toggle_app {
+        .o_home_menu_toggle_icon {
+            display: none;
+        }
+
+        &:hover, &:focus-visible {
+            .o_home_menu_toggle_icon {
+                display: inline-block;
+            }
+
+            .o_home_menu_toggle_app_icon {
+                display: none;
+            }
+        }
+    }
+}

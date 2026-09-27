@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="web_home_menu.NavBar" t-inherit="web.NavBar" t-inherit-mode="primary">
+        <xpath expr="//t[@t-call='web.NavBar.AppsMenu']" position="replace">
+            <t t-if="this.ui.isSmall">
+                <t t-call="web.NavBar.AppsMenu" apps="this.menuService.getApps()"/>
+            </t>
+            <t t-else="">
+                <t t-call="web_home_menu.NavBar.HomeMenuToggle"/>
+            </t>
+        </xpath>
+        <!-- No app brand nor app sections while the home menu is displayed -->
+        <xpath expr="//DropdownItem[contains(@class, 'o_menu_brand')]" position="attributes">
+            <attribute name="t-if">!this.ui.isSmall and this.currentApp and !this.homeMenu.hasHomeMenu()</attribute>
+        </xpath>
+        <xpath expr="//t[@t-if='!this.ui.isSmall']" position="attributes">
+            <attribute name="t-if">!this.ui.isSmall and !this.homeMenu.hasHomeMenu()</attribute>
+        </xpath>
+    </t>
+
+    <t t-name="web_home_menu.NavBar.HomeMenuToggle">
+        <div class="o_navbar_apps_menu">
+            <button type="button"
+                class="o_home_menu_toggle"
+                t-att-class="{
+                    o_home_menu_toggle_back: this.isHomeMenuBack(),
+                    o_home_menu_toggle_app: !this.homeMenu.hasHomeMenu() and this.currentApp
+                }"
+                t-att-title="this.homeMenuToggleTitle()"
+                t-att-aria-label="this.homeMenuToggleTitle()"
+                data-hotkey="h"
+                data-available-offline=""
+                t-on-click="this.onHomeMenuToggle">
+                <i class="o_home_menu_toggle_icon oi" t-att-data-icon="this.isHomeMenuBack() ? 'arrow_back' : 'apps'" aria-hidden="true"/>
+                <t t-if="!this.homeMenu.hasHomeMenu() and this.currentApp">
+                    <img t-if="this.currentApp.webIconData" class="o_home_menu_toggle_app_icon" t-att-src="this.currentApp.webIconData" alt=""/>
+                    <i t-elif="this.currentApp.webIconClass" class="o_home_menu_toggle_app_icon oi" t-att-data-icon="this.currentApp.webIconClass" t-att-style="'color:' + this.currentApp.webIconColor" aria-hidden="true"/>
+                </t>
+            </button>
+        </div>
+    </t>
+
+</templates>
