@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="web_home_menu.HomeMenu">
+        <div class="o_home_menu" t-att-class="this.props.className" t-ref="this.root">
+            <div class="o_home_menu_scrollable">
+                <div class="o_apps" role="list">
+                    <a t-foreach="this.props.apps" t-as="app" t-key="app.id"
+                        class="o_app o_menuitem"
+                        role="listitem"
+                        t-att-class="{ o_disabled_offline: !this.isAvailable(app) }"
+                        t-att-href="app.href"
+                        t-att-data-menu-xmlid="app.xmlid"
+                        t-att-title="app.label"
+                        draggable="false"
+                        t-on-click.prevent="() => this.openApp(app)">
+                        <div class="o_app_icon_wrapper">
+                            <img t-if="app.webIconData" class="o_app_icon" t-att-src="app.webIconData" t-att-alt="app.label"/>
+                            <i t-else="" class="o_app_icon oi" t-att-data-icon="app.webIcon.icon" t-att-style="'color:' + app.webIcon.color" aria-hidden="true"/>
+                        </div>
+                        <div class="o_caption" t-out="app.label"/>
+                    </a>
+                </div>
+                <p t-if="!this.props.apps.length" class="o_home_menu_empty">No application is installed yet.</p>
+                <p t-else="" class="o_home_menu_hint d-none d-md-block">Type to search apps and menus</p>
+            </div>
+        </div>
+    </t>
+
+</templates>
