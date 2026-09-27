@@ -38,6 +38,9 @@ entrypoint that stores attachments in PostgreSQL, so the whole instance lives
 in a DigitalOcean Managed Database. See [deploy/README.md](deploy/README.md)
 (in Greek) for the step-by-step guide.
 
+The fork also ships `addons/web_home_menu`, an Enterprise-style home menu
+(apps grid) for the Community web client; the deploy installs it automatically.
+
 ## Security
 
 If you believe you have found a security issue, check our [Responsible Disclosure page](https://www.odoo.com/security-report)

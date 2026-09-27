@@ -83,6 +83,9 @@ services:
       - key: ODOO_INIT_MODULES
         scope: RUN_TIME
         value: base
+      - key: ODOO_ENSURE_MODULES         # installed when missing, at every start
+        scope: RUN_TIME
+        value: web_home_menu
       - key: ODOO_WITH_DEMO             # demo data at DB creation ("true" for a sales demo)
         scope: RUN_TIME
         value: "false"

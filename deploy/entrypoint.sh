@@ -5,8 +5,9 @@
 # 1. Builds /etc/odoo/odoo.conf from environment variables.
 # 2. Waits for PostgreSQL.
 # 3. Initialises the database on first start (`-i base`).
-# 4. Runs deploy/init_db_storage.py so attachments live in PostgreSQL.
-# 5. Starts the Odoo server (or whatever command was given).
+# 4. Installs the modules of ODOO_ENSURE_MODULES that are missing.
+# 5. Runs deploy/init_db_storage.py so attachments live in PostgreSQL.
+# 6. Starts the Odoo server (or whatever command was given).
 #
 # Environment variables (all optional unless stated otherwise):
 #
@@ -28,6 +29,11 @@
 #   ODOO_INIT_MODULES       Modules installed at database creation (base).
 #   ODOO_WITH_DEMO          true/false: install demo data at creation (false).
 #   ODOO_INIT_LANGUAGE      Languages to load at creation, e.g. el_GR.
+#   ODOO_ENSURE_MODULES     Modules that must be installed, comma separated;
+#                           the missing ones are installed before the server
+#                           starts, so a module added to the image shows up
+#                           on the next deploy (default: web_home_menu; set
+#                           it empty to disable).
 #   ODOO_EXTRA_ADDONS_PATH  Extra addons directories, comma separated.
 #
 # Note: Odoo itself also reads ODOO_<OPTION> variables (e.g. ODOO_WORKERS,
@@ -233,6 +239,26 @@ with psycopg2.connect(connect_timeout=10) as conn, conn.cursor() as cr:
 PY
 }
 
+# Prints the modules of $1 (comma separated) that are not installed. A module
+# unknown to the database (added to the image after the database was created)
+# counts as missing: `odoo-bin -i` refreshes the module list before installing.
+missing_modules() {
+    python3 - "$1" <<'PY'
+import sys
+
+import psycopg2
+
+wanted = [name.strip() for name in sys.argv[1].split(",") if name.strip()]
+with psycopg2.connect(connect_timeout=10) as conn, conn.cursor() as cr:
+    cr.execute(
+        "SELECT name FROM ir_module_module WHERE state = 'installed' AND name = ANY(%s)",
+        (wanted,),
+    )
+    installed = {row[0] for row in cr.fetchall()}
+print(",".join(name for name in wanted if name not in installed))
+PY
+}
+
 # Best effort: the extensions improve search (accent-insensitive, trigram).
 create_extensions() {
     python3 - <<'PY'
@@ -253,7 +279,7 @@ PY
 }
 
 # ---------------------------------------------------------------------------
-# 4./5. Initialise and bootstrap the database, then start Odoo
+# 4./5./6. Initialise and bootstrap the database, then start Odoo
 # ---------------------------------------------------------------------------
 prepare_database() {
     log "waiting for PostgreSQL at ${DB_HOST}:${DB_PORT}"
@@ -279,6 +305,16 @@ prepare_database() {
         "${ODOO_BIN[@]}" -c "${ODOO_RC}" "${init_args[@]}"
         fresh_init=1
         log "database ${DB_NAME} initialised"
+    fi
+
+    local ensure_modules="${ODOO_ENSURE_MODULES-web_home_menu}" missing
+    if [ -n "${ensure_modules}" ]; then
+        missing="$(missing_modules "${ensure_modules}")"
+        if [ -n "${missing}" ]; then
+            log "installing missing module(s) ${missing} (this takes a minute)"
+            "${ODOO_BIN[@]}" -c "${ODOO_RC}" -d "${DB_NAME}" -i "${missing}" --stop-after-init
+            log "module(s) ${missing} installed"
+        fi
     fi
 
     if [ "${ODOO_SKIP_BOOTSTRAP:-0}" != "1" ]; then

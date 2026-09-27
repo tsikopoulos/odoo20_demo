@@ -18,7 +18,8 @@ assets, εικόνες) αποθηκευμένα **μέσα στη βάση** κ
 | `Dockerfile` | Image του Odoo (Python 3.12, fonts, wkhtmltopdf για PDF). Multi-stage build. |
 | `.github/workflows/build-image.yml` | Χτίζει το image στο GitHub Actions με cache και το ανεβάζει στο DOCR. |
 | `.dockerignore` | Κρατά το build context μικρό (χωρίς `.git`, docs, κ.λπ.). |
-| `deploy/entrypoint.sh` | Φτιάχνει το `odoo.conf` από environment variables, περιμένει τη βάση, την αρχικοποιεί την πρώτη φορά (`-i base`), τρέχει το bootstrap και ξεκινά το Odoo. |
+| `deploy/entrypoint.sh` | Φτιάχνει το `odoo.conf` από environment variables, περιμένει τη βάση, την αρχικοποιεί την πρώτη φορά (`-i base`), εγκαθιστά όσα modules του `ODOO_ENSURE_MODULES` λείπουν, τρέχει το bootstrap και ξεκινά το Odoo. |
+| `addons/web_home_menu` | Home menu σε στυλ Enterprise (πλέγμα εφαρμογών) για το Community. Εγκαθίσταται αυτόματα μέσω `ODOO_ENSURE_MODULES`. |
 | `deploy/init_db_storage.py` | Τρέχει μέσα από `odoo-bin shell` σε κάθε εκκίνηση: θέτει `ir_attachment.location = db`, μεταφέρει στη βάση ό,τι attachment βρίσκεται στο δίσκο, και στην πρώτη δημιουργία βάζει τον κωδικό του `admin`. |
 | `.do/app.yaml` | Το App Spec: service (Dockerfile), Managed PostgreSQL, domain, env vars, health check. |
 | `.do/deploy.template.yaml` | Το ίδιο spec σε μορφή για το κουμπί «Deploy to DigitalOcean» (μόνο για public repo). |
@@ -200,6 +201,7 @@ Registry (DOCR). Το App Platform τραβάει το image και κάνει r
 | `ODOO_INIT_MODULES` | `base` | Modules που εγκαθίστανται στη δημιουργία (π.χ. `base,crm,sale_management`). |
 | `ODOO_WITH_DEMO` | `false` | Demo data στη δημιουργία. Μόνο σε νέα βάση. |
 | `ODOO_INIT_LANGUAGE` | – | Γλώσσες που φορτώνονται στη δημιουργία, π.χ. `el_GR`. Μόνο σε νέα βάση. |
+| `ODOO_ENSURE_MODULES` | `web_home_menu` | Modules που πρέπει να είναι εγκατεστημένα (comma separated). Όσα λείπουν εγκαθίστανται σε κάθε εκκίνηση, πριν ξεκινήσει ο server, ακόμη κι αν προστέθηκαν στο image μετά τη δημιουργία της βάσης. Κενό = απενεργοποίηση. |
 | `ODOO_WORKERS` | `0` | Άφησέ το `0` (threaded, ένα port). |
 | `ODOO_MAX_CRON_THREADS` | `1` | Cron threads. |
 | `ODOO_DB_MAXCONN` | `16` | Max συνδέσεις στη βάση. Το `db-s-1vcpu-1gb` επιτρέπει ~22. |
@@ -211,10 +213,14 @@ Registry (DOCR). Το App Platform τραβάει το image και κάνει r
 ## Λειτουργία
 
 - **Logs:** `doctl apps logs <APP_ID> --type run --follow` ή Runtime Logs στο UI.
-- **Νέα έκδοση:** push στο `20.0` → αυτόματο build και deploy. Το Odoo
+- **Νέα έκδοση:** push στο `do-deploy` → αυτόματο build (GitHub Actions) και deploy. Το Odoo
   ξεκινά με την ίδια βάση, το bootstrap είναι idempotent.
 - **Upgrade modules μετά από αλλαγές κώδικα:** από το Console του app
   `odoo-bin -u <module> --stop-after-init` (το `ODOO_RC` είναι ήδη ρυθμισμένο).
+- **Νέο module στο image:** πρόσθεσέ το στο `ODOO_ENSURE_MODULES` (ή βασίσου στο
+  default) και θα εγκατασταθεί μόνο του στην επόμενη εκκίνηση. Το ίδιο κάνει
+  και το `web_home_menu`, γι' αυτό το home menu εμφανίζεται αμέσως μετά το
+  deploy χωρίς να το εγκαταστήσεις από το Apps.
 - **Backups:** το Managed PostgreSQL κρατά καθημερινά backups (7 ημέρες) και
   point-in-time recovery. Επειδή τα αρχεία είναι στη βάση, το backup είναι
   πλήρες. Restore = νέο cluster από backup και αλλαγή του `cluster_name`.
