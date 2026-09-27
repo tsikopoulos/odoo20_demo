@@ -9,6 +9,8 @@
 # Before the first deploy:
 #   * create the managed PostgreSQL cluster named in `databases[].cluster_name`
 #     (App Platform can only *attach* production clusters, not create them);
+#   * create the DOCR registry and let .github/workflows/build-image.yml push
+#     the image once (see deploy/README.md);
 #   * set the two SECRET values below (random values are generated when the
 #     app is created by Claude; change the admin password from Odoo afterwards);
 #   * point the DNS of `domains[].domain` to the app (CNAME to the
@@ -18,19 +20,27 @@ region: fra
 
 services:
   - name: odoo
-    github:
-      repo: tsikopoulos/odoo20_demo
-      branch: do-deploy   # switch to "20.0" once merged
-      deploy_on_push: true
-    dockerfile_path: Dockerfile
-    source_dir: /
+    # The image is built by .github/workflows/build-image.yml and pushed to
+    # the DigitalOcean Container Registry; App Platform pulls it and redeploys
+    # on every push of the `latest` tag. To build on DigitalOcean from git
+    # instead (slow: the repository is 1.4 GB), replace this block with:
+    #   github: {repo: tsikopoulos/odoo20_demo, branch: do-deploy, deploy_on_push: true}
+    #   dockerfile_path: Dockerfile
+    #   source_dir: /
+    image:
+      registry_type: DOCR
+      repository: odoo20-demo
+      tag: latest
+      deploy_on_push:
+        enabled: true
     http_port: 8069
     instance_count: 1            # keep 1: sessions live on the container disk
     instance_size_slug: apps-s-1vcpu-2gb
     health_check:
       http_path: /web/health
-      # The very first start installs `base` (a few minutes): give it time.
-      initial_delay_seconds: 180
+      # The database is initialised; a start takes ~30 s. Raise to 180 when
+      # deploying against an empty database (the first start installs `base`).
+      initial_delay_seconds: 60
       period_seconds: 30
       timeout_seconds: 10
       success_threshold: 1

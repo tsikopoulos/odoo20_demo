@@ -16,6 +16,7 @@ assets, εικόνες) αποθηκευμένα **μέσα στη βάση** κ
 | Αρχείο | Ρόλος |
 |---|---|
 | `Dockerfile` | Image του Odoo (Python 3.12, fonts, wkhtmltopdf για PDF). Multi-stage build. |
+| `.github/workflows/build-image.yml` | Χτίζει το image στο GitHub Actions με cache και το ανεβάζει στο DOCR. |
 | `.dockerignore` | Κρατά το build context μικρό (χωρίς `.git`, docs, κ.λπ.). |
 | `deploy/entrypoint.sh` | Φτιάχνει το `odoo.conf` από environment variables, περιμένει τη βάση, την αρχικοποιεί την πρώτη φορά (`-i base`), τρέχει το bootstrap και ξεκινά το Odoo. |
 | `deploy/init_db_storage.py` | Τρέχει μέσα από `odoo-bin shell` σε κάθε εκκίνηση: θέτει `ir_attachment.location = db`, μεταφέρει στη βάση ό,τι attachment βρίσκεται στο δίσκο, και στην πρώτη δημιουργία βάζει τον κωδικό του `admin`. |
@@ -149,6 +150,40 @@ odoo → Environment Variables):
    ```
 
    Περιμένεις `db` και `on_disk = 0`.
+
+## Build στο GitHub Actions, deploy από το Container Registry
+
+Το repo είναι 1,4 GB και το build στη DigitalOcean έπαιρνε 15 με 20 λεπτά σε
+κάθε push. Τώρα το image χτίζεται στο GitHub Actions
+(`.github/workflows/build-image.yml`) με cache των layers (πακέτα και Python
+εξαρτήσεις δεν ξαναχτίζονται) και ανεβαίνει στο DigitalOcean Container
+Registry (DOCR). Το App Platform τραβάει το image και κάνει redeploy μόνο του
+σε κάθε νέο `latest` (`deploy_on_push` στο `.do/app.yaml`). Deploy σε 5 με 8
+λεπτά αντί για 20.
+
+Ρύθμιση, μία φορά:
+
+1. **Registry.** Container Registry → Create Registry, όνομα π.χ. `stgroup`,
+   region `fra1`, πλάνο **Basic** (5 $/μήνα, 5 GB· το δωρεάν πλάνο είναι
+   500 MB και δεν χωράει το image). Αν διαλέξεις άλλο όνομα, βάλε στο GitHub
+   repository variable `DOCR_NAME` (Settings → Secrets and variables →
+   Actions → Variables).
+2. **Token στο GitHub.** Settings → Secrets and variables → Actions → New
+   repository secret: `DIGITALOCEAN_ACCESS_TOKEN` με ένα DO token που έχει
+   δικαίωμα εγγραφής στο registry.
+3. **Actions ενεργά.** Σε fork τα Actions είναι απενεργοποιημένα: καρτέλα
+   Actions → «I understand my workflows, go ahead and enable them».
+4. **Πρώτο build.** Actions → Build image → Run workflow (branch `do-deploy`),
+   ή απλά ένα push στο `do-deploy`. Το πρώτο build χωρίς cache παίρνει 12 με
+   15 λεπτά, τα επόμενα 3 με 5.
+5. **Spec του app.** Το `.do/app.yaml` δείχνει πλέον στο image
+   (`image.registry_type: DOCR`). Εφάρμοσέ το στο app μία φορά: Settings →
+   App Spec → Edit → επικόλληση, ή `doctl apps update <APP_ID> --spec
+   .do/app.yaml`. Από εκεί και πέρα η DO ξαναφορτώνει το image αυτόματα.
+
+Καθαρισμός: το registry κρατά ένα tag ανά commit (`sha`) και το `latest`.
+Κάθε λίγους μήνες τρέξε Garbage Collection από το UI του registry ή διέγραψε
+παλιά tags.
 
 ## Environment variables
 

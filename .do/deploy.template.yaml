@@ -1,6 +1,8 @@
 # "Deploy to DigitalOcean" button template (public repositories only).
-# Kept in sync with .do/app.yaml; secrets and the domain must be filled in
-# after the app is created.
+# Git-source variant, kept for reference: the live app deploys from the
+# container image built by .github/workflows/build-image.yml (see .do/app.yaml).
+# Note: for this repository the button fails ("No template found") because
+# DigitalOcean cannot clone the 1.4 GB repository within its time limit.
 spec:
   name: odoo20-demo
   region: fra

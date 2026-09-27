@@ -1,0 +1,64 @@
+# Build the Odoo image on GitHub Actions and push it to the DigitalOcean
+# Container Registry (DOCR). App Platform deploys the new image automatically
+# (`deploy_on_push` in .do/app.yaml), so a deploy no longer clones the 1.4 GB
+# repository on DigitalOcean's build machines.
+#
+# Requirements (one-time, see deploy/README.md):
+#   * a DOCR registry (Basic tier; the free tier is too small for this image);
+#   * repository secret DIGITALOCEAN_ACCESS_TOKEN (token with registry write);
+#   * optional repository variable DOCR_NAME when the registry is not "stgroup".
+name: Build image
+
+on:
+  push:
+    branches: [do-deploy]
+  workflow_dispatch:
+
+concurrency:
+  group: build-image-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOCR_NAME: ${{ vars.DOCR_NAME || 'stgroup' }}
+  IMAGE_NAME: odoo20-demo
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Log in to DOCR
+        run: doctl registry login --expiry-seconds 3600
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          # A plain image manifest (no provenance attestation) is what App
+          # Platform expects when pulling from the registry.
+          provenance: false
+          tags: |
+            registry.digitalocean.com/${{ env.DOCR_NAME }}/${{ env.IMAGE_NAME }}:latest
+            registry.digitalocean.com/${{ env.DOCR_NAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          # System packages and the Python virtualenv are restored from the
+          # GitHub Actions cache; only the source copy is rebuilt per commit.
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Summary
+        run: |
+          echo "Pushed registry.digitalocean.com/${DOCR_NAME}/${IMAGE_NAME}:latest (${GITHUB_SHA::7})" >> "$GITHUB_STEP_SUMMARY"
+          echo "App Platform redeploys automatically when the app spec uses this image with deploy_on_push." >> "$GITHUB_STEP_SUMMARY"
