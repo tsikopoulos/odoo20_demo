@@ -65,11 +65,11 @@ services:
       - key: ODOO_ADMIN_PASSWD          # master password (database manager)
         scope: RUN_TIME
         type: SECRET
-        value: CHANGE-ME-master-password
+        value: EV[1:4ec5KcAgEblu4kEJHM8Cv+u9oX3qWnWn:ZiJO8URRE1p2ejUI2VMgk/39lYkn]
       - key: ODOO_ADMIN_USER_PASSWORD   # password of the "admin" login, applied at DB creation
         scope: RUN_TIME
         type: SECRET
-        value: CHANGE-ME-admin-password
+        value: EV[1:YUuyIIAyxvn7IVAkmEujtDPKKl6Lb6EM:m/solAiD30nemqtAqB49+kobyfx1]
       - key: ODOO_INIT_MODULES
         scope: RUN_TIME
         value: base
@@ -92,7 +92,7 @@ services:
 databases:
   - name: odoo-db
     engine: PG
-    version: "17"
+    version: "18"
     production: true
     cluster_name: odoo20-demo-db   # existing managed cluster (same region)
     db_name: defaultdb
@@ -100,7 +100,7 @@ databases:
     # For a quick test with a $7 dev database instead, replace the block with:
     #   - name: odoo-db
     #     engine: PG
-    #     version: "17"
+    #     version: "18"
     #     production: false
 
 domains:
