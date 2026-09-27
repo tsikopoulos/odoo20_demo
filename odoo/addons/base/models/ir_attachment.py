@@ -1122,7 +1122,11 @@ class IrAttachment(models.Model):
             except OSError:
                 pass
 
-        elif self.url:
+        elif self.url and not self.db_datas:
+            # Only redirect when there is nothing to serve: binary attachments
+            # kept in the database (ir_attachment.location = db) carry both a
+            # routing url (e.g. /web/assets/...) and their data, and redirecting
+            # them to their own url would loop forever.
             return Stream(type='url', url=self.url, **kw)
 
         data = self.raw.content

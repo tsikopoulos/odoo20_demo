@@ -32,6 +32,13 @@ assets, εικόνες) αποθηκευμένα **μέσα στη βάση** κ
   κάθε deploy). Με `ir_attachment.location = db` όλα τα attachments και τα
   assets (JS/CSS bundles) αποθηκεύονται στον πίνακα `ir_attachment`. Έτσι το
   backup της managed βάσης περιέχει **τα πάντα**.
+- **Patch στο `ir.attachment._to_http_stream`.** Το Odoo 20 ελέγχει το πεδίο
+  `url` ενός attachment πριν από τα δεδομένα του στη βάση. Τα asset bundles
+  (`/web/assets/...`) έχουν και `url` και δεδομένα, οπότε με
+  `ir_attachment.location = db` γίνονταν redirect στον εαυτό τους (301 σε
+  βρόχο) και οι σελίδες εμφανίζονταν χωρίς CSS/JS. Η αλλαγή στο
+  `odoo/addons/base/models/ir_attachment.py` κάνει redirect μόνο όταν δεν
+  υπάρχουν δεδομένα (`db_datas`). Κράτα την σε κάθε merge από upstream.
 - **Sessions στο δίσκο.** Τα HTTP sessions μένουν στο container, άρα μετά από
   redeploy οι χρήστες ξανακάνουν login. Γι' αυτό `instance_count: 1`.
 - **`db_system` = η ίδια βάση.** Το Odoo 20 χρησιμοποιεί μια «system database»
@@ -205,3 +212,4 @@ docker run --rm -p 8069:8069 \
 | `FATAL: too many connections` | Μείωσε `ODOO_DB_MAXCONN` ή μεγάλωσε τον κόμβο της βάσης. |
 | Ξανά login μετά από deploy | Αναμενόμενο (sessions στο container). |
 | PDF reports κενά/σφάλμα | Το wkhtmltopdf είναι στο image. Έλεγξε `web.base.url` και ότι το domain απαντά σε HTTPS. |
+| Σελίδες χωρίς CSS/JS (σκέτο HTML) | Τα `/web/assets/...` κάνουν 301 σε βρόχο: λείπει το patch του `_to_http_stream` (δες παραπάνω), π.χ. μετά από merge από upstream. |
